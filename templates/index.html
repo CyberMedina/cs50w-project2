@@ -1,0 +1,47 @@
+{% extends './layout.html' %}
+
+
+{% block title %}Inicio{% endblock %}
+
+
+{% block body %}
+
+{% if g.name %}
+
+
+<h2>Hola {{ g.name }}</h2>
+<a type="POST" class="btn btn-info"  href="{{ url_for('close_session') }}">Cerrar Sesión</a>
+
+
+
+
+{% else %}
+<br><br><br>
+<form action="/" method="POST">
+    <h3>¿Eres nuevo por acá?</h3>
+    <input type="text" placeholder="Escribe tú nombre" name="userName" id="userName">
+    <button type="POST" class="btn btn-info" id="btnSaveUserName">Guardar</button>
+</form>
+{% endif %}
+
+
+
+
+<!-- <script>
+    document.addEventListener('DOMContentLoaded', function(){
+
+        document.querySelector('#btnSaveUserName').addEventListener('click', function(e){
+            
+            e.preventDefault(); // Detenemos la función POST del botón
+            
+            let userName = document.getElementById('userName').value; // Obtenemos el nombre del usuario
+            console.log(userName)
+        });
+
+        
+    })
+
+
+    localStorage.getItem('userName')
+</script> -->
+{% endblock %}
