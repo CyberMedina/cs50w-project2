@@ -12,6 +12,21 @@
 <h2>Hola {{ g.name }}</h2>
 <a type="POST" class="btn btn-info"  href="{{ url_for('close_session') }}">Cerrar Sesión</a>
 
+<h1>Chat</h1>
+<div id="status"></div>
+<input type="text" id="room" placeholder="Nombre de la sala">
+<button onclick="joinRoom()">Unirse a la sala</button>
+<button onclick="leaveRoom()">Salir de la sala</button>
+<br>
+<h2>Lista de canales</h2>
+<button onclick="get_channels()">Mostrar salas</button>
+<div id="channels"></div>
+<input type="text" id="message" placeholder="Mensaje">
+<button onclick="sendMessage()">Enviar</button>
+<br>
+<div id="messages"></div>
+
+
 
 
 
@@ -24,24 +39,50 @@
 </form>
 {% endif %}
 
+<script>
+    var socket = io();
 
+    function joinRoom(){
+        var room = document.getElementById("room").value;
+        socket.emit('join', {'room': room})
+    }
 
+    function leaveRoom(){
+        var room = document.getElementById("room").value;
+        socket.emit('leave', {'room': room});
+    }
 
-<!-- <script>
-    document.addEventListener('DOMContentLoaded', function(){
+    function get_channels(){
+        socket.emit('get_channels');
+    }
 
-        document.querySelector('#btnSaveUserName').addEventListener('click', function(e){
-            
-            e.preventDefault(); // Detenemos la función POST del botón
-            
-            let userName = document.getElementById('userName').value; // Obtenemos el nombre del usuario
-            console.log(userName)
-        });
+    function sendMessage(){
+        var room = document.getElementById("room").value;
+        var message = document.getElementById("message").value;
+        socket.emit('message', { 'room': room, 'message': message });
+        document.getElementById("message").value = '';
+    }
 
+    socket.on('channel_list', function(data){
+        var channels = document.getElementById("channels");
+        channels.innerHTML = "";
+        data.forEach(function(channel){
+            channels.innerHTML += '<p>' + channel + '</p>';
+        })
         
-    })
+    });
+
+    socket.on('status', function(data){
+        var status = document.getElementById("status");
+        status.innerHTML += '<p>' + data.msg + '</p>';
+    });
+
+    socket.on('message', function (data) {
+        var messages = document.getElementById("messages");
+        messages.innerHTML += '<p>' + data.user + ': ' + data.datetime + data.msg + '</p>';
+    });
+</script>
 
 
-    localStorage.getItem('userName')
-</script> -->
+
 {% endblock %}
