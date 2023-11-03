@@ -23,6 +23,7 @@ Session(app)
 MAX_MESSAGES = 100
 channels = set()
 connversations = []
+user_rooms = {}
 
 
 
@@ -44,37 +45,86 @@ def index():
     
     return render_template('index.html')
 
+@socketio.on('get_messages')
+def get_messages(data):
+    room = data['room']
+    print(f'La sala es: {room}')
+    print(channels)
+    if room in channels:
+        for conversation in connversations:
+            if room == conversation['room']:
+                print(conversation)
+                emit('status', conversation)
+            else:
+                emit('status', {'msg': '404'})
+                print("No existe conversación")
+    else:
+        emit('status', {'msg': '404'})
+        print("No existe la sala")
+    
 
-@socketio.on('join')
+@socketio.on('create_channel')
 def on_join(data):
     room = data['room']
-    channels.add(room)
+    if room not in channels:
+        channels.add(room)
+        print(channels)
+        emit('new_channel', list(channels), broadcast=True)
+
+    else:
+        emit('status', {'msg': 'La sala ya existe!'})
+
+
+@socketio.on('joinBtn')
+def on_joinBtn(data):
+    room = data['room']
+    print(f'Te acabas de unir a {room}')
     join_room(room)
-    emit('status', {'msg': 'Te has unido a la sala' + room + '!'})
+    emit('status', room)
+    return {'status': 'joined'}  # Enviando confirmación al cliente
+
 
 @socketio.on('get_channels')
 def get_channels():
     print(channels)
     print("Entró!")
-    emit('channel_list', list(channels))
+    emit('new_channel', list(channels))
 
 @socketio.on('leave')
 def on_leave(data):
     room = data['room']
     leave_room(room)
-    emit('status', {'msg' : 'Te has salido de la sala: ' + room + '!'})
+    print(f'Te acabas de salir de {room}')
+    emit('leave_channel')
+
+
+@socketio.on('list_messages')
+def list_messages(data):
+    especificUserConversation = []
+    room = data['room']
+    print(f'Estás almacenando en el canal: {room}')
+
+    for conversation in connversations:
+        if room == conversation['room']:
+            print(conversation)
+            especificUserConversation.append(conversation)
+    
+    emit('list_messages', especificUserConversation)
+
 
 @socketio.on('message')
 def handle_message(data):
     room = data['room']
+    print(f'función envio de mensaje{room}')
     message = data['message']
     datetimeStatus = datetime.datetime.today().strftime("%Y-%m-%d a las %H:%M:")
 
     # Almacenando el mensaje en la lista de conversaciones
     connversations.append({
+        'room': room,
         'msg': message, 
-                     'user': session['userName'], 
-                     'datetime': datetime.datetime.today().strftime("%Y-%m-%d a las %H:%M:")
+        'user': session['userName'], 
+        'datetime': datetime.datetime.today().strftime("%Y-%m-%d a las %H:%M:")
     })
 
     if len(connversations) > MAX_MESSAGES:

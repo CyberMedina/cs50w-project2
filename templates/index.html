@@ -8,23 +8,77 @@
 
 {% if g.name %}
 
+<div class="container">
+    <div class="leftSide">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">
+                <h6 id="userName">{{ g.name }}</h6>
+            </div>
+            <ul class="nav_icons">
+                <li><ion-icon name="scan-circle-outline"></ion-icon></li>
+                <li><ion-icon name="chatbox"></ion-icon></li>
+                <li><ion-icon name="ellipsis-vertical"></ion-icon></li>
+            </ul>
+        </div>
+        <!-- Search Chat -->
+        <div class="search_chat">
+            <div>
+                <input type="text" placeholder="Crea una nueva sala" id="room">
+                <ion-icon class="btn btn-success" onclick="createChannel()" name="search-outline"></ion-icon>
+            </div>
+        </div>
+        <!-- CHAT LIST -->
+        <div class="chatlist" id="chatlist">
+            <!-- <div class="block active">
+                <div class="details">
+                    <div class="listHead">
+                        <h4>Jhon Doe</h4>
+                    </div>
+                </div>
+            </div>
 
-<h2>Hola {{ g.name }}</h2>
-<a type="POST" class="btn btn-info"  href="{{ url_for('close_session') }}">Cerrar Sesión</a>
+            <div class="block unread" >
+                <div class="details">
+                    <div class="listHead">
+                        <h4>Andre</h4>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+    </div>
+    <div class="rightSide">
+        <div class="header">
+            <div class="imgText" id="title-channel">
+                <div class="userimg">
+                    <img src="images/img1.jpg" alt="" class="cover">
+                </div>
+            </div>
+            <ul class="nav_icons">
+                <li><ion-icon name="search-outline"></ion-icon></li>
+                <li><ion-icon name="ellipsis-vertical"></ion-icon></li>
+            </ul>
+        </div>
 
-<h1>Chat</h1>
-<div id="status"></div>
-<input type="text" id="room" placeholder="Nombre de la sala">
-<button onclick="joinRoom()">Unirse a la sala</button>
-<button onclick="leaveRoom()">Salir de la sala</button>
-<br>
-<h2>Lista de canales</h2>
-<button onclick="get_channels()">Mostrar salas</button>
-<div id="channels"></div>
-<input type="text" id="message" placeholder="Mensaje">
-<button onclick="sendMessage()">Enviar</button>
-<br>
-<div id="messages"></div>
+        <!-- CHAT-BOX -->
+        <div class="chatbox" id="chatbox">
+
+        </div>
+
+        <!-- CHAT INPUT -->
+        <div class="chat_input">
+            <ion-icon name="happy-outline"></ion-icon>
+            <!-- <ion-icon name="happy-outline"></ion-icon> -->
+            <input type="text" placeholder="Escribe un mensaje" id="message" onkeyup="SendWithEnter(event)">
+            <ion-icon name="send" onclick="sendMessage()"></ion-icon>
+            <ion-icon name="mic"></ion-icon>
+        </div>
+    </div>
+</div>
+
+
+
+
 
 
 
@@ -42,44 +96,141 @@
 <script>
     var socket = io();
 
-    function joinRoom(){
-        var room = document.getElementById("room").value;
-        socket.emit('join', {'room': room})
+    let lastroom = null;
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        get_channels();
+    });
+
+    function createChannel() {
+        let room = document.getElementById("room").value;
+        socket.emit('create_channel', { 'room': room })
     }
 
-    function leaveRoom(){
-        var room = document.getElementById("room").value;
-        socket.emit('leave', {'room': room});
+    function joinRoomBtn(room) {
+
+        if (lastroom) {
+            leaveRoom();
+        }
+
+        socket.emit('joinBtn', { 'room': room }, function (confirmation) {
+            if (confirmation.status === 'joined') {
+                lastroom = room;
+                socket.emit('list_messages', { 'room': room });
+            }
+        });
     }
 
-    function get_channels(){
+    function leaveRoom() {
+        let room = document.getElementById("room").value;
+        socket.emit('leave', { 'room': room });
+        lastroom = null;
+
+    }
+
+    function get_channels() {
         socket.emit('get_channels');
     }
 
-    function sendMessage(){
-        var room = document.getElementById("room").value;
-        var message = document.getElementById("message").value;
-        socket.emit('message', { 'room': room, 'message': message });
-        document.getElementById("message").value = '';
+    function get_messages() {
+        let room = document.getElementById("btnRoom").value;
+        socket.emit('get_messages', { 'room': room })
     }
 
-    socket.on('channel_list', function(data){
-        var channels = document.getElementById("channels");
+    // Función para poder enviar mensajes con la tecla enter
+    function SendWithEnter(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function sendMessage() { // ACÁ ESTÁS
+        let room = document.getElementById("title-channelinChat").innerText;
+        let message = document.getElementById("message").value.trim();
+
+        if (message) {
+            socket.emit('message', { 'room': room, 'message': message });
+            document.getElementById("message").value = '';
+        }
+    }
+
+    socket.on('new_channel', function (data) {
+        let channels = document.getElementById("chatlist");
         channels.innerHTML = "";
-        data.forEach(function(channel){
-            channels.innerHTML += '<p>' + channel + '</p>';
-        })
-        
+        data.forEach(function (channel) {
+            channels.innerHTML += `
+                <div class="block unread" id="btnRoom" onclick="joinRoomBtn('${channel}')">
+                    <div class="details">
+                        <div class="listHead">
+                            <h4 id="div-channel">${channel}</h4>
+                        </div>
+                    </div>
+                </div>`;
+        });
     });
 
-    socket.on('status', function(data){
-        var status = document.getElementById("status");
-        status.innerHTML += '<p>' + data.msg + '</p>';
+    function list_messages() {
+        socket.emit('list_messages')
+    }
+
+
+
+    socket.on('status', function (data) {
+        let titleChannel = document.getElementById("title-channel");
+        titleChannel.innerHTML = '<h4 id="title-channelinChat">' + data + '</h4>';
+    });
+
+    socket.on('list_messages', function (data) {
+        console.log(data);
+        let user_name = document.getElementById("userName").innerText;
+        let chatbox = document.getElementById("chatbox");
+
+        data.forEach(function (datas) {
+            if (datas.user === user_name) {
+                chatbox.innerHTML += `
+                <div class="message my_msg">
+                    <p>${datas.msg}<br><span>${datas.datetime}</span></p>
+                </div>
+            `;
+            }
+            else {
+                chatbox.innerHTML += `
+                <div class="message friend_msg">
+                    <p><b>${datas.user}</b><br>${datas.msg}<br><span>${datas.datetime}</span></p>
+                </div>
+            `;
+            }
+        });
+
+
     });
 
     socket.on('message', function (data) {
-        var messages = document.getElementById("messages");
-        messages.innerHTML += '<p>' + data.user + ': ' + data.datetime + data.msg + '</p>';
+        let user_name = document.getElementById("userName").innerText;
+        let chatbox = document.getElementById("chatbox")
+
+
+        if (data.user === user_name) {
+            chatbox.innerHTML += `
+            <div class="message my_msg">
+                <p>${data.msg}<br><span>${data.datetime}</span></p>
+            </div>
+        `;
+        }
+        else {
+            chatbox.innerHTML += `
+            <div class="message friend_msg">
+                <p><b>${data.user}</b><br>${data.msg}<br><span>${data.datetime}</span></p>
+            </div>
+        `;
+        }
+
+    });
+
+    socket.on('leave_channel', function () {
+        let chatbox = document.getElementById("chatbox")
+        chatbox.innerHTML = '';
     });
 </script>
 
