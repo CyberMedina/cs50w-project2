@@ -1,0 +1,95 @@
+$icon-size: 50px;
+
+@mixin flex($direction, $wrapping, $justify, $align) {
+    display: flex;
+    flex-direction: $direction;
+    flex-wrap: $wrapping;
+    justify-content: $justify;
+    align-items: $align;
+}
+
+@mixin bg($color) {
+    background-color: $color;
+}
+
+@mixin radius($radius) {
+    border-radius: $radius;
+}
+
+@mixin transition {
+    transition: all .3s ease;
+}
+
+@mixin same-size($size) {
+    height: $size;
+    width: $size;
+}
+
+.emoji-selector {
+    @include bg(white);
+    @include radius(1rem);
+    cursor: default;
+    display: block;
+    padding: 0;
+    border: 1px solid #eee;
+    position: absolute;
+    bottom: 0%;
+    width: 325px;
+    height: 350px;
+    z-index: 5;
+    opacity: 0;
+    pointer-events: none;
+    overflow: auto;
+    transition: bottom 0.3s ease, opacity 0.3s ease;
+    &.active {
+        bottom: 110%;
+        opacity: 1;
+        pointer-events: all;
+    }
+    .input-container {
+        padding: 1rem;
+        @include bg(white);
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        input {
+            border-radius: 25px;
+            border: 1px solid #eee;
+            width: 100%;
+            padding: .5rem 1rem;
+            outline: none;
+        }
+    }
+    ul.emoji-list {
+        @include bg(white);
+        @include flex(row, wrap, flex-start, flex-start);
+        padding: 0 1rem 1rem;
+        border-radius: 0;
+        li {
+            @include same-size(35px);
+            @include radius(.25rem);
+            font-size: 1.5rem;
+            &:hover {
+                @include bg(rgba(black, 0.1));
+            }
+        }
+    }
+}
+
+li {
+    list-style: none;
+}
+
+// Asegúrate de que este estilo de la lista no se aplique a otros elementos que no sean la lista de emojis.
+#emojiList li {
+    @include same-size($icon-size);
+    @include radius(50%);
+    @include transition();
+    @include flex(row, nowrap, center, center);
+    cursor: pointer;
+    padding: 1rem;
+    overflow: hidden;
+    &:hover {
+        @include bg(rgba(black, 0.1));
+    }
+}

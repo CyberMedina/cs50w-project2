@@ -13,19 +13,23 @@
         <!-- Header -->
         <div class="header">
             <div class="title">
-                <h6 id="userName">{{ g.name }}</h6>
+                <h5 id="userName"><b>{{ g.name }}</b></h5>
             </div>
-            <ul class="nav_icons">
-                <li><ion-icon name="scan-circle-outline"></ion-icon></li>
-                <li><ion-icon name="chatbox"></ion-icon></li>
-                <li><ion-icon name="ellipsis-vertical"></ion-icon></li>
+            <ul class="nav_icons" style="margin-top: 5px;">
+                <li><ion-icon name="ellipsis-vertical" class="dropdown-toggle" href="#" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false"></ion-icon>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('close_session') }}"
+                                style="font-size:medium;">Cerrar Sesión</a></li>
+                    </ul>
+                </li>
             </ul>
         </div>
         <!-- Search Chat -->
         <div class="search_chat">
             <div>
                 <input type="text" placeholder="Crea una nueva sala" id="room">
-                <ion-icon class="btn btn-success" onclick="createChannel()" name="search-outline"></ion-icon>
+                <ion-icon class="btn btn-success" onclick="createChannel()" name="chatbubbles-outline"></ion-icon>
             </div>
         </div>
         <!-- CHAT LIST -->
@@ -47,32 +51,11 @@
             </div> -->
         </div>
     </div>
-    <div class="rightSide">
-        <div class="header">
-            <div class="imgText" id="title-channel">
-                <div class="userimg">
-                    <img src="images/img1.jpg" alt="" class="cover">
-                </div>
-            </div>
-            <ul class="nav_icons">
-                <li><ion-icon name="search-outline"></ion-icon></li>
-                <li><ion-icon name="ellipsis-vertical"></ion-icon></li>
-            </ul>
-        </div>
+    <div class="rightSide" id="rightSide">
 
-        <!-- CHAT-BOX -->
-        <div class="chatbox" id="chatbox">
 
-        </div>
 
-        <!-- CHAT INPUT -->
-        <div class="chat_input">
-            <ion-icon name="happy-outline"></ion-icon>
-            <!-- <ion-icon name="happy-outline"></ion-icon> -->
-            <input type="text" placeholder="Escribe un mensaje" id="message" onkeyup="SendWithEnter(event)">
-            <ion-icon name="send" onclick="sendMessage()"></ion-icon>
-            <ion-icon name="mic"></ion-icon>
-        </div>
+
     </div>
 </div>
 
@@ -83,45 +66,224 @@
 
 
 
-
 {% else %}
 <br><br><br>
-<form action="/" method="POST">
-    <h3>¿Eres nuevo por acá?</h3>
-    <input type="text" placeholder="Escribe tú nombre" name="userName" id="userName">
-    <button type="POST" class="btn btn-info" id="btnSaveUserName">Guardar</button>
+<form class="title-screen" action="/" method="POST">
+    <img src="{{ url_for('static', filename='images/whatsapp2.jpg') }}" alt="" style="max-width: 300px;">
+    <h3 id="title-start">¿Eres nuevo por acá?</h3>
+    <input type="text" placeholder="Escribe tú nombre" name="userName" id="userName" style="color: #ffff;">
+    <button type="POST" class="btn btn-primary my-gradient-button" id="btnSaveUserName">Guardar</button>
 </form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        localStorage.clear();
+    });
+</script>
 {% endif %}
 
 <script>
     var socket = io();
 
-    let lastroom = null;
+    // Variable para mantener el estado de enfoque de la ventana
+    let isWindowFocused = true;
+
+    // Evento para detectar cuando la ventana está en foco
+    window.onfocus = function () {
+        isWindowFocused = true;
+    };
+
+    // Evento para detectar cuando la ventana pierde el foco
+    window.onblur = function () {
+        isWindowFocused = false;
+    };
+
+    // Función para reproducir el sonido
+    function playSound() {
+        var audio = new Audio('/static/sounds/ringtone.mp3'); // Ruta al archivo de sonido
+        console.log('se escuchó el audio!')
+        audio.play();
+    }
+
+    // Función para reproducir el sonido
+    function playSoundSend() {
+        var audio = new Audio('/static/sounds/soundSend.mp3'); // Ruta al archivo de sonido
+        console.log('se escuchó el audio!')
+        audio.play();
+    }
+
+    // Función para reproducir el sonido
+    function playSoundReceive() {
+        var audio = new Audio('/static/sounds/soundRecieve.mp3'); // Ruta al archivo de sonido
+        console.log('se escuchó el audio!')
+        audio.play();
+    }
 
 
+    let lastroom = null; // Con esta variable podremos al macenar la sala anterior a la hora de realizar un cambio de sala
+    statusFrontEndChat = null;
+
+    // Con esto cargaremos la lista de canales a la hora de cargar la página
     document.addEventListener("DOMContentLoaded", function () {
+        let latestRoom = localStorage.getItem("lastestRoom")
+        console.log(latestRoom)
+        if (latestRoom !== null) {
+            joinRoomBtn(latestRoom);
+        }
         get_channels();
     });
 
+    // Creación de los canales
     function createChannel() {
         let room = document.getElementById("room").value;
-        socket.emit('create_channel', { 'room': room })
+
+        socket.emit('create_channel', { 'room': room }, function (confirmation) {
+            if (confirmation.status === 'created') {
+                var toast = new bootstrap.Toast(document.getElementById('toastStatus'))
+                // Selecciono el id de los componentes de mi toastStatus
+                var titleToast = document.getElementById('titleToast');
+                var bodyToast = document.getElementById('bodyToast');
+        
+                // Insertamos el texto a los componentes de mi toast
+                titleToast.innerText = "La sala ha sido creada con éxito!"
+                bodyToast.innerText = "Ahora a chatear chele"
+        
+                document.getElementById("room").value = '';
+                toast.show();
+            }
+            else
+            {
+                var toast = new bootstrap.Toast(document.getElementById('toastStatus'))
+                // Selecciono el id de los componentes de mi toastStatus
+                var titleToast = document.getElementById('titleToast');
+                var bodyToast = document.getElementById('bodyToast');
+        
+                // Insertamos el texto a los componentes de mi toast
+                titleToast.innerText = "La sala no se pudo crear"
+                bodyToast.innerText = "No puedes crear salas repetidas"
+        
+        
+                toast.show();
+            }
+        });
+        
+
     }
 
+    function setupEmojilist() {
+        const emojiSelectorIcon = document.getElementById('emojiSelectorIcon');
+        const emojiSelector = document.getElementById('emojiSelector');
+        const emojiList = document.getElementById("emojiList");
+
+        // Escuchador de eventos para el icono del selector de emojis
+        emojiSelectorIcon.addEventListener('click', (event) => {
+            emojiSelector.classList.toggle('active');
+            event.stopPropagation(); // Previene que el evento se propague al documento
+        });
+
+        // Escuchador de eventos para el documento
+        document.addEventListener('click', (event) => {
+            // Si el clic no es dentro del emojiSelector o emojiSelectorIcon, cierra el emojiSelector
+            if (!emojiSelector.contains(event.target) && event.target !== emojiSelectorIcon) {
+                emojiSelector.classList.remove('active');
+            }
+        });
+
+
+        fetch('https://emoji-api.com/emojis?access_key=43d52a40507c756a69edc32b10fef4fce1393d47')
+            .then(res => res.json())
+            .then(data => loadEmoji(data))
+
+
+        function loadEmoji(data) {
+            data.forEach(emoji => {
+                let li = document.createElement('li');
+                li.setAttribute('emoji-name', emoji.slug);
+                li.textContent = emoji.character;
+                // Añadir un escuchador de eventos para cada emoji
+                li.addEventListener('click', () => {
+                    const messageInput = document.getElementById('message');
+                    messageInput.value += emoji.character; // Agrega el emoji al contenido del input
+                });
+                emojiList.appendChild(li);
+            });
+        }
+
+
+        emojiSearch.addEventListener('keyup', e => {
+            let value = e.target.value;
+            let emojis = document.querySelectorAll('#emojiList li');
+            emojis.forEach(emoji => {
+                if (emoji.getAttribute('emoji-name').toLowerCase().includes(value)) {
+                    emoji.style.display = 'flex';
+                }
+                else {
+                    emoji.style.display = 'none';
+                }
+            })
+        })
+    }
+
+    // Entraremos a una sala obteniendo su nombre de sala mediante su onclick
     function joinRoomBtn(room) {
 
+        let rightSide = document.getElementById("rightSide");
+
+        localStorage.setItem("statusFrontEndChat", true)
+
+
+        if (localStorage.getItem("statusFrontEndChat")) {
+            rightSide.innerHTML = ` <div class="header">
+                <div class="imgText" id="title-channel">
+                    <div class="userimg">
+                        <img src="images/img1.jpg" alt="" class="cover">
+                    </div>
+                </div>
+            </div>
+    
+            <!-- CHAT-BOX -->
+            <div class="chatbox" id="chatbox">
+                
+            </div>
+    
+            <!-- CHAT INPUT -->
+            <div class="chat_input">
+                <li class="emoji-selector" id="emojiSelector">
+                    <div class="input-container">
+                        <input id="emojiSearch" type="text" placeholder="Buscar...">
+                    </div>
+                    <ul id="emojiList" class="emoji-list">
+                        <!-- Los emojis se cargarán aquí -->
+                    </ul>
+                </li>
+                <li id="emojiSelectorIcon">
+                    <ion-icon name="happy-outline"></ion-icon>
+                </li>
+                <input type="text" placeholder="Escribe un mensaje" id="message" onkeyup="SendWithEnter(event)">
+                <ion-icon name="send" onclick="sendMessage()"></ion-icon>
+            </div>
+            `;
+            setupEmojilist();
+        }
+
+
+        // Si existe una sala, nos saldremos
         if (lastroom) {
             leaveRoom();
         }
 
+        // Entramos a la sala esperando una confirmación del backend
+        // para luego cargar la lista de mensajes de esa sala
         socket.emit('joinBtn', { 'room': room }, function (confirmation) {
             if (confirmation.status === 'joined') {
                 lastroom = room;
+                localStorage.setItem("lastestRoom", room)
                 socket.emit('list_messages', { 'room': room });
             }
         });
     }
 
+    // Función para salir de la sala
     function leaveRoom() {
         let room = document.getElementById("room").value;
         socket.emit('leave', { 'room': room });
@@ -129,23 +291,27 @@
 
     }
 
+    // Con esta función le enviarmeos al backend la petición de cargar la lista de los canales 
     function get_channels() {
         socket.emit('get_channels');
     }
 
+    // Con esta función le enviaremos al backend la petición de cargar los mensajes
     function get_messages() {
         let room = document.getElementById("btnRoom").value;
         socket.emit('get_messages', { 'room': room })
     }
 
-    // Función para poder enviar mensajes con la tecla enter
+    // Función para poder enviar mensajes desde el input con la tecla enter
     function SendWithEnter(event) {
         if (event.key === 'Enter') {
             sendMessage();
         }
     }
 
-    function sendMessage() { // ACÁ ESTÁS
+
+    // Función para enviar mensaje, mandando los datos del mensaje al backend
+    function sendMessage() { // ACÁ ESTÁS ERROR
         let room = document.getElementById("title-channelinChat").innerText;
         let message = document.getElementById("message").value.trim();
 
@@ -155,9 +321,14 @@
         }
     }
 
+
+    // Recibiendo del backend la creación de un nuevo canal e insertarlo en el HTML
     socket.on('new_channel', function (data) {
         let channels = document.getElementById("chatlist");
         channels.innerHTML = "";
+
+        // Esto se encarga de insertar el nombre del canal y además crear una función en cada div del canal,
+        //para luego de hacer un evento on click se pueda unir a el
         data.forEach(function (channel) {
             channels.innerHTML += `
                 <div class="block unread" id="btnRoom" onclick="joinRoomBtn('${channel}')">
@@ -168,25 +339,36 @@
                     </div>
                 </div>`;
         });
+
+       
     });
 
+    // Esta función de enviar una petición al backend la lista de mensajes de una sala
     function list_messages() {
         socket.emit('list_messages')
     }
 
 
+    function closeSession() {
+        socket.emit('closeSession')
+    }
 
+
+    // Con esta recibimos del backend el nombre de la sala en la que entramos
+    // y la insertamos en el HTML el titulo
     socket.on('status', function (data) {
         let titleChannel = document.getElementById("title-channel");
         titleChannel.innerHTML = '<h4 id="title-channelinChat">' + data + '</h4>';
     });
 
+    // Recibimos del backend la lista de mensajes para esa sala y luego la insertaremos en el HTML
     socket.on('list_messages', function (data) {
         console.log(data);
         let user_name = document.getElementById("userName").innerText;
         let chatbox = document.getElementById("chatbox");
 
         data.forEach(function (datas) {
+            // Validando si el usuario es el que envió esos mensajes para cambiar el nombre de su clase
             if (datas.user === user_name) {
                 chatbox.innerHTML += `
                 <div class="message my_msg">
@@ -194,6 +376,7 @@
                 </div>
             `;
             }
+            // Si no es el usuario le cambiamos el nombre a la clase para hacer ver que es invitado
             else {
                 chatbox.innerHTML += `
                 <div class="message friend_msg">
@@ -206,32 +389,50 @@
 
     });
 
+    // Recibimos del backend el mensaje en tiempo real que se acaba de enviar al canal
     socket.on('message', function (data) {
         let user_name = document.getElementById("userName").innerText;
         let chatbox = document.getElementById("chatbox")
 
-
+        // Se realiza la validación si es el usuario que ha iniciado sesión 
+        //para cambiar el nobmre de su clase en el HTML que se insertará
         if (data.user === user_name) {
             chatbox.innerHTML += `
             <div class="message my_msg">
                 <p>${data.msg}<br><span>${data.datetime}</span></p>
             </div>
         `;
+            // Función para reproducir el sonido
+            playSoundSend();
         }
+
+
         else {
             chatbox.innerHTML += `
             <div class="message friend_msg">
                 <p><b>${data.user}</b><br>${data.msg}<br><span>${data.datetime}</span></p>
             </div>
         `;
+
+            if (isWindowFocused) {
+                playSoundReceive();
+            }
+        }
+
+        if (!isWindowFocused) {
+            playSound();
         }
 
     });
 
+    // Función que recibe del backend que se salío del canal
     socket.on('leave_channel', function () {
         let chatbox = document.getElementById("chatbox")
         chatbox.innerHTML = '';
     });
+
+
+
 </script>
 
 

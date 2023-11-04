@@ -1,0 +1,77 @@
+.emoji-selector {
+  background-color: white;
+  border-radius: 1rem;
+  cursor: default;
+  display: block;
+  padding: 0;
+  border: 1px solid #eee;
+  position: absolute;
+  bottom: 0%;
+  width: 325px;
+  height: 350px;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  overflow: auto;
+  transition: bottom 0.3s ease, opacity 0.3s ease;
+}
+.emoji-selector.active {
+  bottom: 110%;
+  opacity: 1;
+  pointer-events: all;
+}
+.emoji-selector .input-container {
+  padding: 1rem;
+  background-color: white;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.emoji-selector .input-container input {
+  border-radius: 25px;
+  border: 1px solid #eee;
+  width: 100%;
+  padding: 0.5rem 1rem;
+  outline: none;
+}
+.emoji-selector ul.emoji-list {
+  background-color: white;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 0 1rem 1rem;
+  border-radius: 0;
+}
+.emoji-selector ul.emoji-list li {
+  height: 35px;
+  width: 35px;
+  border-radius: 0.25rem;
+  font-size: 1.5rem;
+}
+.emoji-selector ul.emoji-list li:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+li {
+  list-style: none;
+}
+
+#emojiList li {
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 1rem;
+  overflow: hidden;
+}
+#emojiList li:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}/*# sourceMappingURL=style.css.map */

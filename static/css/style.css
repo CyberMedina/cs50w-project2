@@ -11,14 +11,15 @@
     align-items: center;
     min-height: 100vh;
     background: linear-gradient(
-      #009688 0%,
-      #009688 130px,
-      #d9dbd5 130px,
-      #d9dbd5 100%
+      #392b0a 0%,
+      #dacc70 130px,
+      #000000 130px,
+      #000000 100%
     );
   }
   
   .container {
+    padding: 0 !important;
     position: relative;
     width: 1298px;
     max-width: 100%;
@@ -48,7 +49,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: url("images/pattern.png");
+    background: url("/static/images/pattern.png");
     opacity: 0.06;
   }
   
@@ -352,3 +353,111 @@
     font-size: 1em;
   }
 
+  .emoji-selector {
+    background-color: white;
+    border-radius: 1rem;
+    cursor: default;
+    display: block;
+    padding: 0;
+    border: 1px solid #eee;
+    position: absolute;
+    bottom: 0%;
+    width: 325px;
+    height: 350px;
+    z-index: 5;
+    opacity: 0;
+    pointer-events: none;
+    overflow: auto;
+    transition: bottom 0.3s ease, opacity 0.3s ease;
+  }
+  .emoji-selector.active {
+    bottom: 110%;
+    opacity: 1;
+    pointer-events: all;
+  }
+  .emoji-selector .input-container {
+    padding: 1rem;
+    background-color: white;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .emoji-selector .input-container input {
+    border-radius: 25px;
+    border: 1px solid #eee;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    outline: none;
+  }
+  .emoji-selector ul.emoji-list {
+    background-color: white;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 0 1rem 1rem;
+    border-radius: 0;
+  }
+  .emoji-selector ul.emoji-list li {
+    height: 35px;
+    width: 35px;
+    border-radius: 0.25rem;
+    font-size: 1.5rem;
+  }
+  .emoji-selector ul.emoji-list li:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  li {
+    list-style: none;
+  }
+  
+  #emojiList li {
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    padding: 1rem;
+    overflow: hidden;
+  }
+  #emojiList li:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  #title-start{
+    /* Define un gradiente radial como fondo del texto */
+  background: radial-gradient(circle, #392b0a, #dacc70);
+  
+  /* Asegúrate de que el texto sea transparente para que se vea el fondo */
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  
+  }
+
+  #userName{
+    background-color: transparent;
+    border-color: #392b0a;
+  }
+
+  .my-gradient-button {
+    background: linear-gradient(to right, #392b0a, #dacc70);
+    border: none; /* Elimina el borde si lo prefieres así */
+    color: white; /* Asegúrate de que el texto se vea bien sobre el gradiente */
+  }
+  /* Si deseas mantener los efectos de hover de Bootstrap, asegúrate de también definirlos para tu clase personalizada */
+  .my-gradient-button:hover {
+    background: linear-gradient(to right, #dacc70, #392b0a);
+  }
+  
+  .title-screen{
+    margin-top: -50px;
+  }

@@ -15,7 +15,7 @@ app.jinja_env.globals['g'] = g
 socketio = SocketIO(app, cors_allowed_origins='*')
 
 # Configure session to use filesystem
-app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
@@ -24,6 +24,7 @@ MAX_MESSAGES = 100
 channels = set()
 connversations = []
 user_rooms = {}
+
 
 
 
@@ -45,6 +46,13 @@ def index():
     
     return render_template('index.html')
 
+
+    
+
+
+
+    
+
 @socketio.on('get_messages')
 def get_messages(data):
     room = data['room']
@@ -65,14 +73,16 @@ def get_messages(data):
 
 @socketio.on('create_channel')
 def on_join(data):
-    room = data['room']
-    if room not in channels:
+    room = data['room'].lower()  # Convertir el nombre de la sala a minúsculas
+    lower_channels = {channel.lower() for channel in channels}
+    if room not in lower_channels:
         channels.add(room)
         print(channels)
         emit('new_channel', list(channels), broadcast=True)
+        return {'status': 'created'}
 
     else:
-        emit('status', {'msg': 'La sala ya existe!'})
+        return {'status': 'noCreated'}
 
 
 @socketio.on('joinBtn')
@@ -80,6 +90,7 @@ def on_joinBtn(data):
     room = data['room']
     print(f'Te acabas de unir a {room}')
     join_room(room)
+    g.roomstatus = room
     emit('status', room)
     return {'status': 'joined'}  # Enviando confirmación al cliente
 
@@ -136,8 +147,13 @@ def handle_message(data):
                      'datetime': datetimeStatus }, room=room)
 
 
-
+    
 @app.route("/close_session")
 def close_session():
     session.pop('userName', None)
     return redirect(url_for('index'))
+    
+
+
+
+    
