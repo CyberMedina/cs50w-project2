@@ -3,8 +3,14 @@
 Sí, este es el project 2: Flack o como le llamo yo es WhatsApp 2, la interfaz de usuario es totalmente absurda y es totalmente intencional por seguir tendencias de memes.
 
 ## Imagenes del proyecto
+### Menú inicio
+<img src="assets/WhatsApp2-tittlescreen.png" height="300">
 
-<img src="https://postimg.cc/sBpSX8QC" width="100" height="100">
+### Menú Principal
+<img src="assets/WhatsApp2-menuPrincipal.png" height="300">
+
+### Lista de emojis
+<img src="assets/WhatsApp2-emojis.png" height="300">
 
 
 ## Características
