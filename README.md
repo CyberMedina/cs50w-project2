@@ -46,8 +46,6 @@ El proyecto se desarrolló utilizando las siguientes tecnologías:
 
 ## ¿Necesitas instalarlo?
 
-## Instalación y Configuración
-
 1. Clonar el repositorio: `git clone https://github.com/usuario/project1.git`
 2. Configurar las variables de entorno copiando el archivo `.env.template` a un nuevo archivo llamado `.env` y llenando las claves correspondientes.
 5. Realizar un entorno virtual: `python -m venv venv`
