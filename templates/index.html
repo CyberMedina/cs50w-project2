@@ -9,6 +9,13 @@
 {% if g.name %}
 
 <div class="container">
+    <a id="scroll-up" class="scroll-up" href="#">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0 0h24v24H0z" fill="none"></path>
+            <path fill="rgba(255,255,255,1)" d="M11.9997 10.8284L7.04996 15.7782L5.63574 14.364L11.9997 8L18.3637 14.364L16.9495 15.7782L11.9997 10.8284Z">
+            </path>
+        </svg>
+    </a>
     <div class="leftSide">
         <!-- Header -->
         <div class="header">
@@ -28,8 +35,11 @@
         <!-- Search Chat -->
         <div class="search_chat">
             <div>
-                <input type="text" placeholder="Crea una nueva sala" id="room">
-                <ion-icon class="btn btn-success" onclick="createChannel()" name="chatbubbles-outline"></ion-icon>
+                <input type="text" placeholder="Crea una nueva sala" id="room" maxlength="35"
+                    onkeyup="statusColorIconChannel(event)">
+
+                <ion-icon id="icon-room" class="btn btn-primary IconChannel" onclick="createChannel()"
+                    name="chatbubbles-outline"></ion-icon>
             </div>
         </div>
         <!-- CHAT LIST -->
@@ -71,7 +81,8 @@
 <form class="title-screen" action="/" method="POST">
     <img src="{{ url_for('static', filename='images/whatsapp2.jpg') }}" alt="" style="max-width: 300px;">
     <h3 id="title-start">¿Eres nuevo por acá?</h3>
-    <input type="text" placeholder="Escribe tú nombre" name="userName" id="userName" style="color: #ffff;">
+    <input type="text" placeholder="Escribe tú nombre" name="userName" id="userName" style="color: #ffff;"
+        maxlength="15" required>
     <button type="POST" class="btn btn-primary my-gradient-button" id="btnSaveUserName">Guardar</button>
 </form>
 
@@ -105,9 +116,41 @@
         audio.play();
     }
 
+    function ToEndButton(){
+        var scrollToEndButton = document.getElementById('scroll-up');
+        var chatbox = document.getElementById('chatbox');
+
+        scrollToEndButton.style.display = 'none';
+
+        scrollToEndButton.addEventListener('click', function(event){
+            event.preventDefault();
+
+            chatbox.scrollTop = chatbox.scrollHeight;
+        })
+
+        chatbox.addEventListener('scroll', function(){
+            var isAtBottom = chatbox.scrollTop + chatbox.clientHeight >= chatbox.scrollHeight;
+
+            if (!isAtBottom){
+                scrollToEndButton.style.display = 'block';
+            }
+            else{
+                scrollToEndButton.style.display = 'none'
+            }
+
+        })
+    }
+
     // Función para reproducir el sonido
     function playSoundSend() {
         var audio = new Audio('/static/sounds/soundSend.mp3'); // Ruta al archivo de sonido
+        console.log('se escuchó el audio!')
+        audio.play();
+    }
+
+    // Función para reproducir el sonido
+    function playSoundPersonEnterChannel() {
+        var audio = new Audio('/static/sounds/soundPersonEnter.mp3'); // Ruta al archivo de sonido
         console.log('se escuchó el audio!')
         audio.play();
     }
@@ -131,42 +174,54 @@
             joinRoomBtn(latestRoom);
         }
         get_channels();
+
+
+        ToEndButton();
     });
 
     // Creación de los canales
     function createChannel() {
-        let room = document.getElementById("room").value;
+        let room = document.getElementById("room").value.trim();
+
+        var icon = document.getElementById('icon-room');
+
+        var toast = new bootstrap.Toast(document.getElementById('toastStatus'))
+        // Selecciono el id de los componentes de mi toastStatus
+        var titleToast = document.getElementById('titleToast');
+        var bodyToast = document.getElementById('bodyToast');
 
         socket.emit('create_channel', { 'room': room }, function (confirmation) {
             if (confirmation.status === 'created') {
-                var toast = new bootstrap.Toast(document.getElementById('toastStatus'))
-                // Selecciono el id de los componentes de mi toastStatus
-                var titleToast = document.getElementById('titleToast');
-                var bodyToast = document.getElementById('bodyToast');
-        
+
+
                 // Insertamos el texto a los componentes de mi toast
                 titleToast.innerText = "La sala ha sido creada con éxito!"
                 bodyToast.innerText = "Ahora a chatear chele"
-        
+
                 document.getElementById("room").value = '';
                 toast.show();
+                icon.classList.remove('activateIconChannel');
+
             }
-            else
-            {
-                var toast = new bootstrap.Toast(document.getElementById('toastStatus'))
-                // Selecciono el id de los componentes de mi toastStatus
-                var titleToast = document.getElementById('titleToast');
-                var bodyToast = document.getElementById('bodyToast');
-        
+            else if ((confirmation.status === 'noCreated')) {
                 // Insertamos el texto a los componentes de mi toast
                 titleToast.innerText = "La sala no se pudo crear"
                 bodyToast.innerText = "No puedes crear salas repetidas"
-        
-        
+
+
                 toast.show();
             }
+            else {
+                // Insertamos el texto a los componentes de mi toast
+                titleToast.innerText = "La sala no se pudo crear"
+                bodyToast.innerText = "¿Cómo quieres crear una sala sin nombre?"
+
+
+                toast.show();
+
+            }
         });
-        
+
 
     }
 
@@ -243,6 +298,8 @@
     
             <!-- CHAT-BOX -->
             <div class="chatbox" id="chatbox">
+
+                
                 
             </div>
     
@@ -260,7 +317,7 @@
                     <ion-icon name="happy-outline"></ion-icon>
                 </li>
                 <input type="text" placeholder="Escribe un mensaje" id="message" onkeyup="SendWithEnter(event)">
-                <ion-icon name="send" onclick="sendMessage()"></ion-icon>
+                <ion-icon class="IconMessage" id="icon-send" name="send" onclick="sendMessage()"></ion-icon>
             </div>
             `;
             setupEmojilist();
@@ -275,13 +332,44 @@
         // Entramos a la sala esperando una confirmación del backend
         // para luego cargar la lista de mensajes de esa sala
         socket.emit('joinBtn', { 'room': room }, function (confirmation) {
+
+            let username = document.getElementById("userName").value
+            console.log(username)
+
             if (confirmation.status === 'joined') {
                 lastroom = room;
                 localStorage.setItem("lastestRoom", room)
                 socket.emit('list_messages', { 'room': room });
+
+
+
             }
         });
     }
+
+    socket.on('joinChannelStatus', function (data) {
+        let chatbox = document.getElementById("chatbox");
+        let user = data.userName; // Asegúrate de que el servidor envía el nombre de usuario con el evento
+        let message = `${user} se ha dejado caer del techo como un alacrán!`;
+        let frontendRoom = document.getElementById("title-channelinChat").innerText;
+        console.log("debería de imprimir el aviso");
+        console.log(data.room);
+        console.log(frontendRoom);
+
+        if (data.room === frontendRoom) {
+            chatbox.innerHTML += `
+        <div class="custom_tooltip">
+            <div class="content">
+                <p>${message}</p>
+            </div>
+        </div>
+        `;
+            playSoundPersonEnterChannel();
+        }
+    });
+
+
+
 
     // Función para salir de la sala
     function leaveRoom() {
@@ -304,21 +392,56 @@
 
     // Función para poder enviar mensajes desde el input con la tecla enter
     function SendWithEnter(event) {
+        var input = document.getElementById('message');
+        var icon = document.getElementById('icon-send');
+
+        // Verificar si el input está vacío y actualizar la clase del ícono
+        if (input.value.trim() !== '') {
+            icon.classList.add('activateIconMessage');
+        } else {
+            icon.classList.remove('activateIconMessage');
+        }
+
+        // Envía el mensaje si la tecla presionada es 'Enter'
         if (event.key === 'Enter') {
             sendMessage();
         }
     }
+
+    function statusColorIconChannel(event) {
+        var input = document.getElementById('room');
+        var icon = document.getElementById('icon-room');
+
+        // Verificar si el input está vacío y actualizar la clase del ícono
+        if (input.value.trim() !== '') {
+            icon.classList.add('activateIconChannel');
+        } else {
+            icon.classList.remove('activateIconChannel');
+        }
+
+        // Envía el mensaje si la tecla presionada es 'Enter'
+        if (event.key === 'Enter') {
+            createChannel();
+        }
+    }
+
 
 
     // Función para enviar mensaje, mandando los datos del mensaje al backend
     function sendMessage() { // ACÁ ESTÁS ERROR
         let room = document.getElementById("title-channelinChat").innerText;
         let message = document.getElementById("message").value.trim();
+        let icon = document.getElementById('icon-send');
 
         if (message) {
             socket.emit('message', { 'room': room, 'message': message });
             document.getElementById("message").value = '';
+
+            // Remover la clase del ícono ya que el input está vacío
+            icon.classList.remove('activateIconMessage');
         }
+
+
     }
 
 
@@ -340,7 +463,7 @@
                 </div>`;
         });
 
-       
+
     });
 
     // Esta función de enviar una petición al backend la lista de mensajes de una sala
@@ -361,13 +484,71 @@
         titleChannel.innerHTML = '<h4 id="title-channelinChat">' + data + '</h4>';
     });
 
+    // Objeto para almacenar los colores de los usuarios
+    let userColors = {};
+
+    // Paleta de colores legibles para los titulos de los nombres
+    let readableColors = [
+        '#e6194b', // Rojo Brillante
+        '#3cb44b', // Verde Brillante
+        '#ffe119', // Amarillo
+        '#4363d8', // Azul Fuerte
+        '#f58231', // Naranja
+        '#911eb4', // Púrpura
+        '#20b2aa', // Turquesa Oscuro
+        '#f032e6', // Fucsia
+        '#6a9c02', // Verde Lima Oscuro
+        '#fa8072', // Salmón
+        '#008080', // Teal
+        '#aa7eff', // Lavanda
+        '#9a6324', // Marrón
+        '#a0a0a0', // Gris Claro
+        '#800000', // Granate
+        '#aaffc3', // Menta Claro
+        '#808000', // Oliva
+        '#ffd8b1', // Melocotón
+        '#000075', // Azul Marino
+        '#404040', // Gris Oscuro
+        '#000000', // Negro
+        '#0056b3', // Azul Zafiro
+    ];
+
+
+    function getRandomColor() {
+        // Función para seleccionar un color aleatorio de la paleta
+
+        // Con math.floor truncamos el valor de los decimales
+        // Luego math.random hacemos decimales aleatorios de 0 a 1 osea 0.55
+        // Multiplicamos eso por la cantidad de paletas de colores que hay
+        let index = Math.floor(Math.random() * readableColors.length);
+
+
+        // retornamos la paleta de color del arreglo readableColors en la posición de nuestra operación
+        return readableColors[index];
+    }
+
+    function assignUserColor(userName) {
+        // Si el usuario no tiene un color, se le asigna uno
+        if (!userColors[userName]) {
+            userColors[userName] = getRandomColor();
+        }
+
+
+        // si si lo tiene, simplemente retornamos el color nombre de usuario asociado
+        console.log(userColors)
+        return userColors[userName];
+    }
+
+
     // Recibimos del backend la lista de mensajes para esa sala y luego la insertaremos en el HTML
     socket.on('list_messages', function (data) {
+        ToEndButton();
         console.log(data);
         let user_name = document.getElementById("userName").innerText;
         let chatbox = document.getElementById("chatbox");
 
         data.forEach(function (datas) {
+            let color = assignUserColor(datas.user);
             // Validando si el usuario es el que envió esos mensajes para cambiar el nombre de su clase
             if (datas.user === user_name) {
                 chatbox.innerHTML += `
@@ -380,11 +561,15 @@
             else {
                 chatbox.innerHTML += `
                 <div class="message friend_msg">
-                    <p><b>${datas.user}</b><br>${datas.msg}<br><span>${datas.datetime}</span></p>
+                    <p><b style="color:${color};">${datas.user}</b><br>${datas.msg}<br><span>${datas.datetime}</span></p>
                 </div>
             `;
             }
         });
+
+
+
+
 
 
     });
@@ -394,6 +579,8 @@
         let user_name = document.getElementById("userName").innerText;
         let chatbox = document.getElementById("chatbox")
 
+        let color = assignUserColor(data.user);
+
         // Se realiza la validación si es el usuario que ha iniciado sesión 
         //para cambiar el nobmre de su clase en el HTML que se insertará
         if (data.user === user_name) {
@@ -402,21 +589,39 @@
                 <p>${data.msg}<br><span>${data.datetime}</span></p>
             </div>
         `;
+            // Desplaza la vista al último mensaje
+            chatbox.scrollTop = chatbox.scrollHeight;
             // Función para reproducir el sonido
             playSoundSend();
         }
 
 
         else {
+
+            // Calcula si estamos cerca del fondo antes de agregar el nuevo mensaje
+            const isNearBottom = chatbox.scrollTop + chatbox.clientHeight >= chatbox.scrollHeight - 100;
+
+            // Añade tu nuevo mensaje al chatbox aquí
             chatbox.innerHTML += `
             <div class="message friend_msg">
-                <p><b>${data.user}</b><br>${data.msg}<br><span>${data.datetime}</span></p>
+                <p><b style="color:${color};">${data.user}</b><br>${data.msg}<br><span>${data.datetime}</span></p>
             </div>
         `;
+
+            // Si estábamos cerca del fondo, nos desplazamos al nuevo fondo
+            if (isNearBottom) {
+                chatbox.scrollTop = chatbox.scrollHeight;
+            }
+
+
+
+
 
             if (isWindowFocused) {
                 playSoundReceive();
             }
+
+
         }
 
         if (!isWindowFocused) {

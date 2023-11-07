@@ -1,6 +1,6 @@
 import os, datetime
 
-from flask import Flask, render_template, redirect, url_for, request, g, session
+from flask import Flask, render_template, redirect, url_for, request, g, session, flash
 from flask_session import Session
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from dotenv import load_dotenv
@@ -38,11 +38,25 @@ def before_request():
 @app.route("/",methods= ["GET", "POST"])
 def index():
 
+
+
     if request.method == 'POST':
+        userName = request.form.get('userName').strip()
 
-        session['userName'] = request.form.get('userName')
+        if (userName):
+             session['userName'] = request.form.get('userName')
+             return redirect(url_for('index'))
 
-        return redirect(url_for('index'))
+        else:
+            print(f'No deben de haber espacios en blanco {userName}')
+            flash('Hey! debes de poner un nombre para poder continuar', 'Error')
+            return redirect(url_for('index'))
+            
+
+       
+        
+
+        
     
     return render_template('index.html')
 
@@ -73,16 +87,22 @@ def get_messages(data):
 
 @socketio.on('create_channel')
 def on_join(data):
-    room = data['room'].lower()  # Convertir el nombre de la sala a minúsculas
+    lower_room = data['room'].lower()  # Convertir el nombre de la sala a minúsculas
+    room = data['room'] 
     lower_channels = {channel.lower() for channel in channels}
-    if room not in lower_channels:
-        channels.add(room)
-        print(channels)
-        emit('new_channel', list(channels), broadcast=True)
-        return {'status': 'created'}
+    if (lower_room):
+        if lower_room not in lower_channels:
+            channels.add(room)
+            print(channels)
+            emit('new_channel', list(channels), broadcast=True)
+            return {'status': 'created'}
 
+        else:
+            return {'status': 'noCreated'}
     else:
-        return {'status': 'noCreated'}
+        return {'status': 'noInfo'}
+
+
 
 
 @socketio.on('joinBtn')
@@ -90,7 +110,22 @@ def on_joinBtn(data):
     room = data['room']
     print(f'Te acabas de unir a {room}')
     join_room(room)
+    
+    # Usaremos un diccionario con la lista de las salas y los usuarios
+    # Luego validaremos si existe la sala en el diccionario
+    # Si la sala no está en el diccionario, o el nombre de usuario no está en la lista de la sala...
+    if room not in user_rooms or session['userName'] not in user_rooms.get(room, []):
+        # Si la sala no está en el diccionario, inicializamos una nueva lista
+        if room not in user_rooms:
+            user_rooms[room] = []
+        # Añadimos el nombre de usuario a la lista de la sala
+        user_rooms[room].append(session['userName'])
+        emit('joinChannelStatus', {'room': room, 'userName': session['userName']}, broadcast=True)    
+
+
+
     g.roomstatus = room
+    print(f'El diccionario de salas y user_rooms es {user_rooms}')
     emit('status', room)
     return {'status': 'joined'}  # Enviando confirmación al cliente
 
@@ -107,6 +142,14 @@ def on_leave(data):
     leave_room(room)
     print(f'Te acabas de salir de {room}')
     emit('leave_channel')
+
+socketio.on('joinChannelStatus')
+def joinChannelStatus(data):
+    room = data['room']
+    print(f'EL TOOLTIP STATUS ES {room}')
+    g.roomstatus = room
+    emit('status', room, user=session['userName'])
+    return {'data': 'joined'}  # Enviando confirmación al cliente
 
 
 @socketio.on('list_messages')
@@ -152,6 +195,12 @@ def handle_message(data):
 def close_session():
     session.pop('userName', None)
     return redirect(url_for('index'))
+
+
+# Ejecuta la aplicación Flask
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
+    app.run()
     
 
 

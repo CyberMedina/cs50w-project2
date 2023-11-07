@@ -452,12 +452,109 @@
     background: linear-gradient(to right, #392b0a, #dacc70);
     border: none; /* Elimina el borde si lo prefieres así */
     color: white; /* Asegúrate de que el texto se vea bien sobre el gradiente */
+    transition-duration: .15s;
   }
   /* Si deseas mantener los efectos de hover de Bootstrap, asegúrate de también definirlos para tu clase personalizada */
   .my-gradient-button:hover {
     background: linear-gradient(to right, #dacc70, #392b0a);
+    transition-duration: .15s;
+
   }
   
   .title-screen{
     margin-top: -50px;
   }
+
+
+
+  .custom_tooltip {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .custom_tooltip .content {
+  
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    justify-content: flex-end;
+    background-color: #676258;
+    color: #fff;
+    border-radius: 20px;
+    max-width: fit-content;
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.9em;
+  }
+
+  .IconMessage{
+    padding: 5px;
+    border-radius: 7px;
+    padding-left: 10px;
+    padding-right: 5px;
+  }
+
+
+  .activateIconMessage{
+    color: black !important;
+    background-color: #c3b562 !important;
+    border-color: black !important;
+    transition-duration: .15s;
+  }
+
+
+  .IconChannel{
+    background-color: transparent !important;
+    color: #51585c !important;
+    border-color: #51585c !important;
+  }
+
+  .activateIconChannel{
+    color: black !important;
+    border-color: transparent !important;
+    background-color: #c3b562 !important;
+    transition-duration: .15s;
+  }
+
+
+
+/* <Button scrollbar > ============================ */
+a {
+  text-decoration: none;
+}
+/* <main-style> ============================ */
+.scroll-up {
+	position: fixed;
+  right: 4.3%;
+  bottom: 18%;
+  z-index: 100;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: rgba(29, 29, 31, 0.7);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: bottom .4s, transform .4s;
+  transform: rotate(180deg);
+}
+
+.scroll-up:hover {
+  transform: translateY(-.25rem);
+  transform: rotate(180deg);
+}
+
+/* Show scroll-up */
+._show-scroll {
+  bottom: 3rem;
+}
+
+@media (max-width: 1199.98px) {
+  .scroll-up {
+    right: 1rem;
+  }
+}
